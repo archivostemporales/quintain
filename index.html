@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Solitario Juego de Tronos LCG</title>
+    <style>
+        /* ESTILOS DE ESTÉTICA JUEGO DE TRONOS */
+        :root {
+            --bg-dark: #0a0a0a;
+            --panel-bg: #1e1e1e;
+            --gold: #b59410;
+            --gold-dim: #8c730a;
+            --text-main: #e0e0e0;
+            --text-muted: #aaa;
+            --border: #444;
+            --family-stark: #535a61; /* Gris */
+            --family-lannister: #8c1616; /* Rojo */
+        }
+
+        body { 
+            font-family: 'Cinzel', 'Garamond', serif; /* Fuentes nobles */
+            background-color: var(--bg-dark); 
+            color: var(--text-main); 
+            line-height: 1.7; 
+            padding: 20px; 
+            background-image: url('https://www.transparenttextures.com/patterns/dark-linen.png'); /* Textura tela */
+        }
+
+        .container { 
+            max-width: 900px; 
+            margin: auto; 
+            background: var(--panel-bg); 
+            padding: 40px; 
+            border-radius: 5px; 
+            border: 2px solid var(--gold); 
+            box-shadow: 0 0 30px rgba(181, 148, 16, 0.3); 
+        }
+
+        h1 { 
+            text-align: center; 
+            color: var(--gold); 
+            text-transform: uppercase; 
+            letter-spacing: 3px; 
+            border-bottom: 2px solid var(--gold); 
+            padding-bottom: 15px; 
+            margin-bottom: 30px; 
+        }
+
+        h2 { color: var(--gold-dim); border-left: 3px solid var(--gold); padding-left: 10px; margin-top: 25px;}
+
+        .fase { display: none; }
+        .fase.active { display: block; animation: fadeIn 0.4s; }
+
+        /* Estilo para bloques de Reglas IA */
+        .regla-ia { 
+            background: #151515; 
+            border-left: 4px solid var(--family-lannister); 
+            padding: 20px; 
+            margin: 20px 0; 
+            border-radius: 3px; 
+            border: 1px solid #333;
+        }
+        
+        .ia-header {
+            color: var(--gold);
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        /* Botones Estilo Poniente */
+        .btn-container { display: flex; justify-content: space-between; margin-top: 40px; border-top: 1px solid var(--border); padding-top: 20px; }
+        button { 
+            background: #2a2a2a; 
+            color: var(--gold); 
+            border: 1px solid var(--gold); 
+            padding: 12px 24px; 
+            font-family: 'Cinzel', serif; 
+            text-transform: uppercase; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+            letter-spacing: 1px;
+        }
+        button:hover { background: var(--gold); color: #1a1a1a; box-shadow: 0 0 10px rgba(181, 148, 16, 0.5); }
+        button:disabled { background: #1a1a1a; color: #555; border-color: #333; cursor: not-allowed; }
+
+        /* Detalles Desplegables para no saturar */
+        details { background: #252525; padding: 10px; border: 1px solid #333; margin-bottom: 10px; border-radius: 3px; }
+        details summary { color: var(--text-muted); cursor: pointer; font-weight: bold; outline: none; }
+        details[open] summary { color: var(--gold); border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 10px; }
+
+        /* Tablas de Prioridad */
+        .priority-table { font-size: 0.9em; width: 100%; border-collapse: collapse; margin: 15px 0; background: #1a1a1a; }
+        .priority-table td, .priority-table th { border: 1px solid #333; padding: 10px; text-align: left; }
+        .priority-table th { color: var(--gold); text-transform: uppercase; font-size: 0.85em; }
+        .priority-table tr:nth-child(even) { background: #222; }
+
+        /* Iconos Globales (Simulados) */
+        .icon { font-weight: bold; }
+        .mil { color: #e74c3c; } /* Militar - Rojo */
+        .int { color: #af7ac5; } /* Intriga - Morado */
+        .pow { color: #f1c40f; } /* Poder - Amarillo */
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="container">
+    <h1>Guardián del Trono</h1>
+    
+    <div id="fase1" class="fase active">
+        <h2>Fase I: Trama (Plot)</h2>
+        <p>El momento de la estrategia oculta antes de que choquen las espadas.</p>
+        
+        <div class="regla-ia">
+            <span class="ia-header">Decisión de Quintain (IA)</span>
+            1. Revela la carta superior de su mazo de tramas.<br>
+            2. Compara la **Iniciativa** (valor en rombo dorado 🔷).
+            <details>
+                <summary>Ver quién gana Iniciativa</summary>
+                <ul>
+                    <li>**Si Quintain gana:** Él ELIGE ser el **Primer Jugador**.</li>
+                    <li>**Si tú ganas:** Tú eliges.</li>
+                    <li>**Empate:** Tú eliges.</li>
+                </ul>
+            </details>
+            3. Aplica los efectos de **"Al revelar"** (When Revealed) de ambas tramas, empezando por el Primer Jugador.
+        </div>
+    </div>
+
+    <div id="fase2" class="fase">
+        <h2>Fase II: Robo (Draw)</h2>
+        <p>Nuevas fuerzas y planes llegan a la mano.</p>
+        
+        <div class="regla-ia">
+            <span class="ia-header">Logística de Quintain</span>
+            1. Quintain roba 2 cartas.<br>
+            2. Examina las cartas robadas y divídelas:
+            <details open>
+                <summary>Cómo dividir sus cartas</summary>
+                <table class="priority-table">
+                    <tr><th>Tipo de Carta</th><th>Destino</th></tr>
+                    <tr><td>Personajes y Lugares</td><td>Mano Oculta (para reclutar)</td></tr>
+                    <tr><td>Eventos y Accesorios</td><td>**Fila de Justas** (Boca arriba en la mesa)</td></tr>
+                </table>
+                <em>*Las cartas de la Fila de Justas no se reclutan, son usadas por la IA mediante reglas especiales en Fase IV.</em>
+            </details>
+        </div>
+        <p>Tú robas 2 cartas normalmente.</p>
+    </div>
+
+    <div id="fase3" class="fase">
+        <h2>Fase III: Reclutamiento (Marshaling)</h2>
+        <p>El Primer Jugador gasta su Oro para poner tropas y asentar lugares.</p>
+        
+        <div class="regla-ia">
+            <span class="ia-header">Prioridad de Gasto de Quintain</span>
+            Quintain gasta TODO su oro disponible si puede, siguiendo este orden estricto:
+            <ol>
+                <li><strong>Duplicados:</strong> Juega duplicados de cartas únicas que ya tenga en juego (¡gratis!).</li>
+                <li><strong>Personajes:</strong> Juega personajes de su mano, del coste más ALTO al más BAJO.</li>
+                <li><strong>Lugares:</strong> Juega lugares de su mano, del coste más ALTO al más BAJO.</li>
+            </ol>
+            <details>
+                <summary>Reglas Especiales de Oro</summary>
+                <ul>
+                    <li>Si hay empate de coste, tú eliges cuál juega.</li>
+                    <li>La IA NUNCA juega Accesorios de su mano en esta fase (solo Eventos/Accesorios de la Fila de Justas en Fase IV).</li>
+                </ul>
+            </details>
+        </div>
+    </div>
+
+    <div id="fase4" class="fase">
+        <h2>Fase IV: Retos (Challenges)</h2>
+        <p>La guerra, la intriga y el poder se deciden ahora.</p>
+
+        <details>
+            <summary>Prioridades de Ataque de Quintain (IA)</summary>
+            <div class="regla-ia">
+                Quintain realiza hasta 3 ataques (uno de cada tipo si puede). Sigue este orden de decisión para CADA ataque:
+                <ol>
+                    <li>**Tipo de Reto:** Prioriza el tipo (<span class="mil">MIL</span>, <span class="int">INT</span>, <span class="pow">POW</span>) donde tenga más iconos disponibles entre sus personajes de pie.</li>
+                    <li>**Elegir Atacantes:** Ataca con TODOS los personajes de pie que tengan ese icono, del más CARO al más BARATO.</li>
+                    <li>**Usar Sigilo:** Si tiene <span class="icon">Sigilo</span>, debe usarlo contra tu personaje con más Fuerza o con iconos molestos.</li>
+                </ul>
+            </div>
+        </details>
+
+        <details>
+            <summary>Prioridades de Defensa de Quintain (IA)</summary>
+            <div class="regla-ia">
+                Si tú atacas, Quintain defenderá siguiendo estas tablas de prioridad:
+                <table class="priority-table">
+                    <tr><th>Prioridad</th><th>Carta Elegida para Defender</th></tr>
+                    <tr><td>1</td><td>Un personaje que pueda sobrevivir (usando duplicado o salvaguarda).</td></tr>
+                    <tr><td>2</td><td>Personaje sin contadores de poder.</td></tr>
+                    <tr><td>3</td><td>Personaje con la Fuerza más BAJA necesaria para ganar (o empatar) el reto.</td></tr>
+                </table>
+                <em>*Si Quintain no puede ganar el reto defendiendo, arrodillará a un solo personaje (el más barato) solo para evitar que ganes por "Unopposed" (Sin Oposición).</em>
+            </div>
+        </details>
+
+        <details>
+            <summary>Uso de Cartas de la Fila de Justas (IA)</summary>
+            <div class="regla-ia">
+                Quintain usará sus Eventos y Accesorios boca arriba en la Fila de Justas si se cumplen estas condiciones:
+                <ul>
+                    <li>**Accesorios:** Al inicio de la fase, juega accesorios con <span class="icon">Emboscada</span> o si el efecto dice "al inicio de la fase de retos". Los asigna a su personaje más fuerte.</li>
+                    <li>**Eventos:** Quintain lanza un dado (o tú eliges) para ver si usa un Evento cuando se cumple su ventana de activación:
+                        <ul>
+                            <li>**1-3:** No usa el evento.</li>
+                            <li>**4-6:** Usa el evento.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </details>
+    </div>
+
+    <div id="fase5" class="fase">
+        <h2>Fase V: Dominación (Dominance)</h2>
+        <p>Se calcula quién controla la situación política al final del día.</p>
+        
+        <p>Ambos jugadores suman: **Fuerza Total de personajes de pie + Oro sobrante**. Quien tenga más gana **1 de Poder** para su facción.</p>
+
+        <div class="regla-ia">
+            <span class="ia-header">Ajuste de Dificultad (Serafín)</span>
+            Si estás jugando en dificultad Normal o Difícil, Quintain gana poder adicional:
+            <ul>
+                <li>**Normal:** Si es el Turno 2 o superior, Quintain gana **+1 de Poder extra** en esta fase.</li>
+                <li>**Difícil:** Quintain siempre gana **+1 de Poder extra** en esta fase.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="fase6" class="fase">
+        <h2>Fase VI: Puesta en Pie (Standing)</h2>
+        <p>Las tropas descansan y se preparan.</p>
+        
+        <ul>
+            <li>Pon en pie todas tus cartas arrodilladas (personajes, lugares, facción).</li>
+            <li>Quintain pone en pie todas sus cartas.</li>
+            <li>Descarta el oro sobrante de ambas facciones.</li>
+            <li>Comprueba el **Límite de Reserva (Reserve)** de tu trama revelada. Si tienes más cartas en mano, descarta hasta el límite. Quintain NO tiene límite de reserva.</li>
+        </ul>
+    </div>
+
+    <div class="btn-container">
+        <button id="prevBtn" onclick="changeStep(-1)" disabled>Anterior Fase</button>
+        <span id="stepDisplay" style="color: var(--gold-dim); font-weight: bold;">Fase 1 / 6</span>
+        <button id="nextBtn" onclick="changeStep(1)">Siguiente Fase</button>
+    </div>
+</div>
+
+<script>
+    let currentStep = 1;
+    const totalSteps = 6;
+    const faseNombres = [
+        "Trama",
+        "Robo",
+        "Reclutamiento",
+        "Retos",
+        "Dominación",
+        "Puesta en Pie"
+    ];
+
+    function changeStep(n) {
+        // Ocultar fase actual
+        document.getElementById(`fase${currentStep}`).classList.remove('active');
+        
+        // Calcular siguiente fase
+        currentStep += n;
+        
+        // Bucle circular
+        if (currentStep > totalSteps) currentStep = 1;
+        if (currentStep < 1) currentStep = totalSteps;
+        
+        // Mostrar nueva fase
+        document.getElementById(`fase${currentStep}`).classList.add('active');
+        
+        // Actualizar UI
+        document.getElementById('stepDisplay').innerText = `Fase ${currentStep} / ${totalSteps}: ${faseNombres[currentStep-1]}`;
+        
+        // Control de botones
+        document.getElementById('prevBtn').disabled = (currentStep === 1);
+        
+        if (currentStep === totalSteps) {
+            document.getElementById('nextBtn').innerText = "Fin de Ronda";
+        } else {
+            document.getElementById('nextBtn').innerText = "Siguiente Fase";
+        }
+    }
+</script>
+<audio id="bgMusic" loop>
+    <source src="thrones.mp3" type="audio/mpeg">
+    Tu navegador no soporta el elemento de audio.
+</audio>
+
+<div id="musicControl" onclick="toggleMusic()" style="
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #1a1a1a;
+    color: #b59410;
+    border: 1px solid #b59410;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(181, 148, 16, 0.5);
+    z-index: 1000;
+    font-size: 24px;
+">
+    <span id="musicIcon">♪</span>
+</div>
+
+<script>
+    const music = document.getElementById('bgMusic');
+    const icon = document.getElementById('musicIcon');
+
+    function toggleMusic() {
+        if (music.paused) {
+            music.play();
+            icon.innerText = 'II'; // Icono de pausa
+            icon.style.fontSize = '18px';
+        } else {
+            music.pause();
+            icon.innerText = '♪'; // Icono de nota musical
+            icon.style.fontSize = '24px';
+        }
+    }
+
+    // Opcional: Que la música empiece al hacer el primer clic en "Siguiente"
+    // Ya que los navegadores modernos bloquean el autoplay sin interacción previa.
+    document.addEventListener('click', function() {
+        // Solo intentará reproducir si no ha empezado ya
+        if (music.paused && icon.innerText === '♪') {
+            // Descomenta la línea de abajo si quieres que sea automático tras el primer clic
+            // music.play(); icon.innerText = 'II';
+        }
+    }, { once: true });
+</script>
+</body>
+</html>
